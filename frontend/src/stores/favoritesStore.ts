@@ -4,12 +4,12 @@ import { Product } from '@/types/shop';
 
 interface FavoritesState {
   items: Product[];
-  
+
   // Actions
   addFavorite: (product: Product) => void;
-  removeFavorite: (productId: string) => void;
+  removeFavorite: (productId: number) => void;
   toggleFavorite: (product: Product) => void;
-  isFavorite: (productId: string) => boolean;
+  isFavorite: (productId: number) => boolean;
   clearFavorites: () => void;
 }
 
@@ -17,7 +17,7 @@ export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
       items: [],
-      
+
       addFavorite: (product: Product) => {
         set((state) => {
           if (state.items.find(item => item.id === product.id)) {
@@ -26,13 +26,13 @@ export const useFavoritesStore = create<FavoritesState>()(
           return { items: [...state.items, product] };
         });
       },
-      
-      removeFavorite: (productId: string) => {
+
+      removeFavorite: (productId: number) => {
         set((state) => ({
           items: state.items.filter(item => item.id !== productId),
         }));
       },
-      
+
       toggleFavorite: (product: Product) => {
         const isFav = get().isFavorite(product.id);
         if (isFav) {
@@ -41,11 +41,11 @@ export const useFavoritesStore = create<FavoritesState>()(
           get().addFavorite(product);
         }
       },
-      
-      isFavorite: (productId: string) => {
+
+      isFavorite: (productId: number) => {
         return get().items.some(item => item.id === productId);
       },
-      
+
       clearFavorites: () => {
         set({ items: [] });
       },

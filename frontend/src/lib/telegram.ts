@@ -125,17 +125,54 @@ export function getTelegramUser(): TelegramUser | null {
   return tg?.initDataUnsafe?.user || null;
 }
 
+// Helper to compare versions
+function isVersionAtLeast(current: string, required: string): boolean {
+  const currentParts = current.split('.').map(Number);
+  const requiredParts = required.split('.').map(Number);
+  
+  for (let i = 0; i < requiredParts.length; i++) {
+    const curr = currentParts[i] || 0;
+    const req = requiredParts[i] || 0;
+    if (curr > req) return true;
+    if (curr < req) return false;
+  }
+  return true;
+}
+
 // Initialize Telegram WebApp
 export function initTelegramWebApp(): void {
-  const tg = getTelegramWebApp();
-  if (tg) {
-    tg.ready();
-    tg.expand();
-    
-    // Apply theme colors
-    if (tg.colorScheme === 'dark') {
-      document.documentElement.classList.add('dark');
+  const tg = getTelegramWebApp() as any;
+  if (!tg) return;
+  
+  const version = tg.version || '6.0';
+  
+  // Сообщаем что готовы
+  tg.ready();
+  
+  // Разворачиваем на весь экран
+  tg.expand();
+  
+  // Запрашиваем полноэкранный режим (Bot API 8.0+)
+  if (isVersionAtLeast(version, '8.0') && tg.requestFullscreen) {
+    try {
+      tg.requestFullscreen();
+    } catch (e) {
+      // Ignore - not supported
     }
+  }
+  
+  // Отключаем вертикальные свайпы (Bot API 7.7+)
+  if (isVersionAtLeast(version, '7.7') && tg.disableVerticalSwipes) {
+    try {
+      tg.disableVerticalSwipes();
+    } catch (e) {
+      // Ignore - not supported
+    }
+  }
+  
+  // Применяем тему
+  if (tg.colorScheme === 'dark') {
+    document.documentElement.classList.add('dark');
   }
 }
 

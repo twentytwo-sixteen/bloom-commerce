@@ -2,9 +2,9 @@ from django.templatetags.static import static
 from django.urls import reverse_lazy
 
 UNFOLD = {
-    'SITE_TITLE': 'Flower Shop',
-    'SITE_HEADER': 'Flower Shop Admin',
-    'SITE_SYMBOL': 'flower',
+    'SITE_TITLE': 'Bloom Admin',
+    'SITE_HEADER': 'Bloom Admin',
+    # 'SITE_SYMBOL': 'local_florist',  # Закомментировано - используем только текст
     'SHOW_HISTORY': True,
     'SHOW_VIEW_ON_SITE': True,
     'ENVIRONMENT': 'settings.environment.environment_callback',

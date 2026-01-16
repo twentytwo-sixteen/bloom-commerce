@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, Product, PromoCode } from '@/types/shop';
+import type { CartItem, Product, PromoCode } from '@/types/shop';
 
 interface CartState {
   items: CartItem[];
@@ -8,8 +8,8 @@ interface CartState {
   
   // Actions
   addItem: (product: Product, quantity?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: number) => void;
+  updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
   applyPromo: (promo: PromoCode) => void;
   removePromo: () => void;
@@ -19,6 +19,9 @@ interface CartState {
   getSubtotal: () => number;
   getDiscount: () => number;
   getTotal: () => number;
+  
+  // For checkout
+  getCheckoutItems: () => { product_id: number; qty: number }[];
 }
 
 export const useCartStore = create<CartState>()(
@@ -32,10 +35,14 @@ export const useCartStore = create<CartState>()(
           const existingItem = state.items.find(item => item.product_id === product.id);
           
           if (existingItem) {
+            // Проверяем max quantity
+            const maxQty = product.is_unlimited ? 99 : (product.qty_available ?? 99);
+            const newQty = Math.min(existingItem.quantity + quantity, maxQty);
+            
             return {
               items: state.items.map(item =>
                 item.product_id === product.id
-                  ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
+                  ? { ...item, quantity: newQty }
                   : item
               ),
             };
@@ -47,24 +54,25 @@ export const useCartStore = create<CartState>()(
         });
       },
       
-      removeItem: (productId: string) => {
+      removeItem: (productId: number) => {
         set((state) => ({
           items: state.items.filter(item => item.product_id !== productId),
         }));
       },
       
-      updateQuantity: (productId: string, quantity: number) => {
+      updateQuantity: (productId: number, quantity: number) => {
         if (quantity <= 0) {
           get().removeItem(productId);
           return;
         }
         
         set((state) => ({
-          items: state.items.map(item =>
-            item.product_id === productId
-              ? { ...item, quantity: Math.min(quantity, item.product.stock) }
-              : item
-          ),
+          items: state.items.map(item => {
+            if (item.product_id !== productId) return item;
+            
+            const maxQty = item.product.is_unlimited ? 99 : (item.product.qty_available ?? 99);
+            return { ...item, quantity: Math.min(quantity, maxQty) };
+          }),
         }));
       },
       
@@ -85,6 +93,7 @@ export const useCartStore = create<CartState>()(
       },
       
       getSubtotal: () => {
+        // Цены в копейках
         return get().items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
       },
       
@@ -99,6 +108,7 @@ export const useCartStore = create<CartState>()(
         }
         
         if (promoCode.fixed_amount) {
+          // fixed_amount тоже в копейках
           return Math.min(promoCode.fixed_amount, subtotal);
         }
         
@@ -107,6 +117,13 @@ export const useCartStore = create<CartState>()(
       
       getTotal: () => {
         return get().getSubtotal() - get().getDiscount();
+      },
+      
+      getCheckoutItems: () => {
+        return get().items.map(item => ({
+          product_id: item.product_id,
+          qty: item.quantity,
+        }));
       },
     }),
     {

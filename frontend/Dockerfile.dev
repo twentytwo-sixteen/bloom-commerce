@@ -1,0 +1,17 @@
+# Development Dockerfile with hot reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* bun.lockb* ./
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Don't copy source - it will be mounted as volume
+
+EXPOSE 5173
+
+# Start development server using npx to ensure vite is found
+CMD ["npx", "vite", "--host", "0.0.0.0"]

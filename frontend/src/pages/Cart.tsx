@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Tag, X } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Tag, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Header } from '@/components/shop/Header';
+import { BottomNav } from '@/components/shop/BottomNav';
 import { CartItemComponent } from '@/components/shop/CartItem';
 import { EmptyState } from '@/components/shop/EmptyState';
 import { useCartStore } from '@/stores/cartStore';
-import { showBackButton, hideBackButton, hapticFeedback } from '@/lib/telegram';
+import { hapticFeedback } from '@/lib/telegram';
 import { toast } from 'sonner';
+import { formatPrice } from '@/lib/utils';
 
-// Mock promo codes
+// Mock promo codes (fixed_amount in kopecks)
 const promoCodes = {
   'BLOOM10': { code: 'BLOOM10', discount_percent: 10, is_active: true },
-  'SALE500': { code: 'SALE500', fixed_amount: 500, is_active: true },
+  'SALE500': { code: 'SALE500', fixed_amount: 50000, is_active: true }, // 500 руб в копейках
 };
 
 export default function CartPage() {
-  const navigate = useNavigate();
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   
@@ -29,11 +31,6 @@ export default function CartPage() {
     getDiscount,
     getTotal 
   } = useCartStore();
-  
-  useEffect(() => {
-    showBackButton(() => navigate(-1));
-    return () => hideBackButton();
-  }, [navigate]);
   
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -63,34 +60,13 @@ export default function CartPage() {
     hapticFeedback('light');
   };
   
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
-  };
-  
   const subtotal = getSubtotal();
   const discount = getDiscount();
   const total = getTotal();
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 safe-area-top bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="container flex h-14 items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-display text-xl font-semibold">Корзина</h1>
-          {items.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              ({items.length})
-            </span>
-          )}
-        </div>
-      </header>
+      <Header showSearch={false} title="Корзина" />
       
       <main className="container py-4 pb-48">
         {items.length > 0 ? (
@@ -162,7 +138,7 @@ export default function CartPage() {
       
       {/* Bottom Summary */}
       {items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 safe-area-bottom bg-background border-t border-border">
+        <div className="fixed bottom-16 left-0 right-0 safe-area-bottom bg-background border-t border-border">
           <div className="container py-4 space-y-3">
             {/* Summary */}
             <div className="space-y-2 text-sm">
@@ -195,6 +171,8 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      <BottomNav />
     </div>
   );
 }

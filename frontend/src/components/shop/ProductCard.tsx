@@ -16,41 +16,37 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  
+
   const addItem = useCartStore((state) => state.addItem);
   const { toggleFavorite, isFavorite } = useFavoritesStore();
-  
+
   const isLiked = isFavorite(product.id);
-  const isOutOfStock = product.stock === 0;
-  
+  const isOutOfStock = !product.is_available;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (isOutOfStock) return;
-    
+
     addItem(product);
     setAddedToCart(true);
     hapticFeedback('success');
-    
+
     setTimeout(() => setAddedToCart(false), 1500);
   };
-  
+
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     toggleFavorite(product);
     hapticFeedback('light');
   };
-  
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
-  };
-  
+
   return (
     <Link
-      to={`/product/${product.id}`}
+      to={`/product/${product.slug}`}
       className="group block animate-fade-in"
       style={{ animationDelay: `${index * 50}ms` }}
     >
@@ -61,7 +57,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             <div className="absolute inset-0 skeleton" />
           )}
           <img
-            src={product.image_url}
+            src={product.main_image || '/placeholder.jpg'}
             alt={product.title}
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
@@ -71,21 +67,27 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               "group-hover:scale-105"
             )}
           />
-          
-          
+
+          {/* Discount badge */}
+          {product.has_discount && product.old_price_display && (
+            <div className="absolute top-3 left-3 px-2 py-1 bg-destructive text-destructive-foreground text-xs font-medium rounded-full">
+              Скидка
+            </div>
+          )}
+
           {/* Favorite Button */}
           <button
             onClick={handleToggleFavorite}
             className={cn(
               "absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200",
-              isLiked 
-                ? "bg-primary text-primary-foreground" 
+              isLiked
+                ? "bg-primary text-primary-foreground"
                 : "bg-background/80 backdrop-blur-sm text-foreground hover:bg-background"
             )}
           >
             <Heart className={cn("h-4 w-4", isLiked && "fill-current animate-heart")} />
           </button>
-          
+
           {/* Out of Stock Overlay */}
           {isOutOfStock && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center">
@@ -95,18 +97,25 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </div>
           )}
         </div>
-        
+
         {/* Content */}
         <div className="p-3 sm:p-4 flex-1 flex flex-col">
           <h3 className="font-medium text-sm sm:text-base text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors flex-1">
             {product.title}
           </h3>
-          
+
           <div className="flex items-center justify-between gap-2 mt-auto">
-            <span className="text-sm sm:text-base font-semibold text-foreground">
-              {formatPrice(product.price)}
-            </span>
-            
+            <div className="flex flex-col">
+              <span className="text-sm sm:text-base font-semibold text-foreground whitespace-nowrap">
+                {product.price_display}
+              </span>
+              {product.has_discount && product.old_price_display && (
+                <span className="text-xs text-muted-foreground line-through">
+                  {product.old_price_display}
+                </span>
+              )}
+            </div>
+
             <Button
               size="sm"
               variant={addedToCart ? "secondary" : "default"}

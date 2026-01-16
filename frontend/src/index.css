@@ -14,10 +14,44 @@
   display: none;
 }
 
+/* Full viewport for Telegram WebApp */
+html, body, #root {
+  /* Используем Telegram viewport height если доступен */
+  min-height: var(--tg-viewport-stable-height, 100vh);
+  min-height: 100dvh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: hsl(var(--background));
+}
+
+/* Prevent overscroll bounce */
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Safe area для телефонов с вырезами */
+  padding-top: var(--tg-content-safe-area-inset-top, env(safe-area-inset-top, 0));
+  padding-bottom: var(--tg-content-safe-area-inset-bottom, env(safe-area-inset-bottom, 0));
+}
+
+#root {
+  min-height: 100%;
+}
+
 @layer base {
   :root {
     /* Warm Beige Flower Shop Palette */
-    --background: 35 35% 96%;
+    --background: 30 30% 94%; /* #f3ede6 - тёплый бежевый */
     --foreground: 0 0% 0%;
 
     --card: 40 30% 99%;
